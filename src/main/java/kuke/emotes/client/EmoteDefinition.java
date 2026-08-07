@@ -37,6 +37,18 @@ public record EmoteDefinition(String key, int duration, boolean looping, @Nullab
         return translated.getString().equals(this.titleKey()) ? Component.literal(this.key) : translated;
     }
 
+    /**
+     * Name without the {@code (english_key)} suffix the upstream translations carry. The wheel has
+     * to fit eight of these on screen at once, and "牙线舞(floss)" is twice as wide as it needs to be
+     * to tell you which one it is.
+     */
+    public Component shortTitle() {
+        String full = this.title().getString();
+        int bracket = full.indexOf('(');
+
+        return bracket > 0 ? Component.literal(full.substring(0, bracket).trim()) : Component.literal(full);
+    }
+
     public Component description() {
         Component translated = Component.translatable(this.descriptionKey());
 

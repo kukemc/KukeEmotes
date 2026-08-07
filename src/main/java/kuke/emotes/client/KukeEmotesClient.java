@@ -5,6 +5,9 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import kuke.emotes.KukeEmotes;
 import kuke.emotes.client.render.EmoteRenderer;
+import kuke.emotes.client.ui.EmoteWheelScreen;
+import kuke.emotes.client.ui.KukeEmoteKeys;
+import kuke.emotes.net.EmotesBridge;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
@@ -19,6 +22,7 @@ import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RenderPlayerEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
@@ -35,6 +39,9 @@ public final class KukeEmotesClient {
 
     public static void init(IEventBus modBus) {
         modBus.addListener(KukeEmotesClient::onAddReloadListeners);
+        modBus.addListener(KukeEmoteKeys::register);
+
+        EmotesBridge.init();
 
         NeoForge.EVENT_BUS.addListener(KukeEmotesClient::onRenderPlayer);
         NeoForge.EVENT_BUS.addListener(KukeEmotesClient::onClientTick);
@@ -53,12 +60,16 @@ public final class KukeEmotesClient {
             return;
         }
 
+        EmotesBridge.tick();
         EmoteClientState.tick(minecraft);
+        EmoteController.tick();
+        KukeEmoteKeys.tick(minecraft);
     }
 
     private static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
         EmoteClientState.clearAll();
         EmoteClientState.setServerAuthoritative(false);
+        EmotesBridge.resetSession();
     }
 
     /**
@@ -113,8 +124,14 @@ public final class KukeEmotesClient {
                 Player player = Minecraft.getInstance().player;
 
                 if (player != null) {
-                    EmoteClientState.stop(player.getUUID());
+                    EmoteController.stop();
                 }
+
+                return 1;
+            }))
+            /* Opens the wheel from a command as well, so the automated lab can screenshot it. */
+            .then(Commands.literal("wheel").executes(context -> {
+                Minecraft.getInstance().execute(() -> Minecraft.getInstance().setScreen(new EmoteWheelScreen()));
 
                 return 1;
             }))
@@ -151,7 +168,7 @@ public final class KukeEmotesClient {
                         return 0;
                     }
 
-                    if (!EmoteClientState.start(player.getUUID(), key)) {
+                    if (!EmoteController.play(key)) {
                         context.getSource().sendFailure(Component.literal(
                             "Unknown emote or animation not loaded: " + key));
 
