@@ -11,8 +11,9 @@ description = '''${mod_description}'''
 
 # Client-only: the mod never touches the dedicated server. Sync (when available) rides KukeUI's
 # plugin-message channel and is talked to by the KukeCore Paper plugin, not by a server-side mod.
-[[mixins]]
-config = "kukeemotes.mixins.json"
+#
+# No mixins: the render takeover rides NeoForge's cancellable RenderPlayerEvent.Pre, so this mod
+# patches nothing and cannot collide with KukeUI's player-render mixins.
 
 [[dependencies.${mod_id}]]
 modId = "neoforge"

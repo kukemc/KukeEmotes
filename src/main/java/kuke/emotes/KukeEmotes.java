@@ -1,6 +1,8 @@
 package kuke.emotes;
 
+import kuke.emotes.client.KukeEmotesClient;
 import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +32,8 @@ public final class KukeEmotes {
     public static final String MOD_ID = "kukeemotes";
     public static final Logger LOGGER = LoggerFactory.getLogger("KukeEmotes");
 
-    public KukeEmotes() {
+    public KukeEmotes(IEventBus modBus) {
+        KukeEmotesClient.init(modBus);
         LOGGER.info("KukeEmotes loaded (port of McHorse's Emoticons, GPL-3.0)");
     }
 }
