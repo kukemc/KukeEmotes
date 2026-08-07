@@ -31,6 +31,9 @@ public class EmoteModel {
     public static final String ARMOR_FEET = "armor_feet";
     public static final String POPCORN = "popcorn";
 
+    /** Bone the emote props hang off, from upstream's {@code rightHands} attachment map. */
+    public static final String RIGHT_HAND_BONE = "low_right_arm.end";
+
     public final String name;
     public final BOBJArmature armature;
     public final List<EmoteMesh> meshes = new ArrayList<>();

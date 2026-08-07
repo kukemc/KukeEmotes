@@ -95,6 +95,8 @@ public final class EmoteAssets extends SimplePreparableReloadListener<EmoteAsset
         this.slim = loaded.slim;
         this.actions = loaded.actions;
         this.ready = true;
+
+        EmoteRegistry.validateAgainstAssets();
     }
 
     /**

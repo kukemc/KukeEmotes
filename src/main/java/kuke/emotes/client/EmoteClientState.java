@@ -2,6 +2,8 @@ package kuke.emotes.client;
 
 import kuke.emotes.KukeEmotes;
 import net.minecraft.client.Minecraft;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
@@ -47,10 +49,21 @@ public final class EmoteClientState {
     /**
      * Start (or restart) an emote for a player.
      *
+     * @param emoteKey either {@code wave} or {@code rock_paper_scissors:rock} — the suffix picks a
+     *                 variant, and travels over the wire so every viewer sees the same one
      * @return false if the emote is unknown or its animation is not loaded
      */
     public static boolean start(UUID player, String emoteKey) {
-        EmoteDefinition definition = EmoteRegistry.get(emoteKey);
+        String key = emoteKey;
+        String variant = "";
+        int colon = emoteKey == null ? -1 : emoteKey.indexOf(':');
+
+        if (colon >= 0) {
+            key = emoteKey.substring(0, colon);
+            variant = emoteKey.substring(colon + 1);
+        }
+
+        EmoteDefinition definition = EmoteRegistry.get(key);
 
         if (definition == null) {
             KukeEmotes.LOGGER.debug("Ignoring unknown emote '{}'", emoteKey);
@@ -58,7 +71,7 @@ public final class EmoteClientState {
             return false;
         }
 
-        EmoteSession session = EmoteSession.create(definition);
+        EmoteSession session = EmoteSession.create(definition, variant);
 
         if (session == null) {
             return false;
@@ -124,7 +137,12 @@ public final class EmoteClientState {
                 continue;
             }
 
+            float tickBefore = session.playback.getTick(0F);
             session.tick();
+
+            if (session.shouldPlaySound(tickBefore, session.playback.getTick(0F))) {
+                playEmoteSound(player, session);
+            }
 
             if (session.isFinished()) {
                 it.remove();
@@ -137,6 +155,17 @@ public final class EmoteClientState {
                 session.requestStop();
             }
         }
+    }
+
+    private static void playEmoteSound(Player player, EmoteSession session) {
+        SoundEvent sound = EmoteSounds.get(session.definition.soundName());
+
+        if (sound == null) {
+            return;
+        }
+
+        player.level().playLocalSound(player.getX(), player.getY(), player.getZ(), sound,
+            SoundSource.MASTER, EmoteSounds.VOLUME, 1F, false);
     }
 
     private static boolean shouldInterrupt(UUID uuid, Player player, EmoteSession session) {

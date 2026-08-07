@@ -40,9 +40,9 @@ public final class EmoteRegistry {
         register("star_power", 160, true, "star_power");
         register("take_the_l", 16, true, "take_the_l");
         register("tidy", 104, true, "tidy");
-        register("free_flow", 158, true, "free_flow");
-        register("shimmer", 156, true, "shimmer");
-        register("get_funky", 172, true, "get_funky");
+        register("free_flow", 158, true, null);   // upstream registers a sound event with no ogg behind it
+        register("shimmer", 156, true, null);     // ditto
+        register("get_funky", 172, true, null);   // ditto
 
         /* Just emotes */
         register("boy", 29, false, null);

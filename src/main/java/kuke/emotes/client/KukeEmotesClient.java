@@ -140,7 +140,8 @@ public final class KukeEmotesClient {
 
                     return 1;
                 })))
-            .then(Commands.argument("emote", StringArgumentType.word())
+            /* greedyString, not word(), so a variant suffix like "rock_paper_scissors:rock" parses */
+            .then(Commands.argument("emote", StringArgumentType.greedyString())
                 .suggests(emoteKeys)
                 .executes(context -> {
                     String key = StringArgumentType.getString(context, "emote");
