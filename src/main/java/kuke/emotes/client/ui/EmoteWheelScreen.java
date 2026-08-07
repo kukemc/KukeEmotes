@@ -34,6 +34,7 @@ public final class EmoteWheelScreen extends Screen {
     private static final int GOLD = 0xFFD9B45A;
     private static final int TEXT = 0xFFE8E2D4;
     private static final int TEXT_DIM = 0xFF8A8272;
+    private static final int TEXT_LOCKED = 0xFF5A5A5A;
 
     private static final int RING_RADIUS = 104;
     private static final int SLOT_MIN_WIDTH = 54;
@@ -153,7 +154,8 @@ public final class EmoteWheelScreen extends Screen {
             int x = centerX + (int) Math.round(Math.cos(angle) * RING_RADIUS) - slotWidth / 2;
             int y = centerY + (int) Math.round(Math.sin(angle) * RING_RADIUS) - SLOT_HEIGHT / 2;
 
-            this.drawSlot(graphics, x, y, slotWidth, label, slot == this.selected);
+            this.drawSlot(graphics, x, y, slotWidth, label, slot == this.selected,
+                EmoteRegistry.isUnlocked(definition.key()));
         }
     }
 
@@ -192,14 +194,20 @@ public final class EmoteWheelScreen extends Screen {
             ? Component.translatable("kukeemotes.ui.title")
             : definition.title();
 
-        graphics.drawCenteredString(this.font, title, centerX, y + 8, definition == null ? TEXT_DIM : GOLD);
+        boolean unlocked = definition == null || EmoteRegistry.isUnlocked(definition.key());
+
+        graphics.drawCenteredString(this.font, title, centerX, y + 8,
+            definition == null ? TEXT_DIM : (unlocked ? GOLD : TEXT_LOCKED));
 
         if (definition != null) {
-            String description = definition.description().getString();
+            String line = unlocked
+                ? definition.description().getString()
+                : Component.translatable("kukeemotes.ui.locked").getString();
 
-            if (!description.isEmpty()) {
+            if (!line.isEmpty()) {
                 graphics.drawCenteredString(this.font,
-                    this.font.plainSubstrByWidth(description, width - 12), centerX, y + 20, TEXT_DIM);
+                    this.font.plainSubstrByWidth(line, width - 12), centerX, y + 20,
+                    unlocked ? TEXT_DIM : TEXT_LOCKED);
             }
         }
 
@@ -207,12 +215,15 @@ public final class EmoteWheelScreen extends Screen {
             Component.translatable("kukeemotes.ui.page", this.page + 1, this.pages), centerX, y + 33, TEXT_DIM);
     }
 
-    private void drawSlot(GuiGraphics graphics, int x, int y, int width, Component label, boolean selected) {
-        graphics.fill(x, y, x + width, y + SLOT_HEIGHT, selected ? SLOT_SELECTED : SLOT);
-        this.drawBorder(graphics, x, y, width, SLOT_HEIGHT, selected ? GOLD : SLOT_EDGE);
+    private void drawSlot(GuiGraphics graphics, int x, int y, int width, Component label, boolean selected,
+            boolean unlocked) {
+        graphics.fill(x, y, x + width, y + SLOT_HEIGHT, selected && unlocked ? SLOT_SELECTED : SLOT);
+        this.drawBorder(graphics, x, y, width, SLOT_HEIGHT, selected && unlocked ? GOLD : SLOT_EDGE);
+
+        int color = !unlocked ? TEXT_LOCKED : (selected ? GOLD : TEXT);
 
         graphics.drawCenteredString(this.font, label, x + width / 2,
-            y + (SLOT_HEIGHT - this.font.lineHeight) / 2 + 1, selected ? GOLD : TEXT);
+            y + (SLOT_HEIGHT - this.font.lineHeight) / 2 + 1, color);
     }
 
     private void drawBorder(GuiGraphics graphics, int x, int y, int width, int height, int color) {

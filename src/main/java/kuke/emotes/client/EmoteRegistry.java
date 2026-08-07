@@ -3,6 +3,9 @@ package kuke.emotes.client;
 import kuke.emotes.KukeEmotes;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,6 +24,14 @@ public final class EmoteRegistry {
 
     private static final Map<String, EmoteDefinition> EMOTES = new LinkedHashMap<>();
     private static final List<EmoteDefinition> ORDERED = new ArrayList<>();
+
+    /**
+     * What this server says the player may perform. Empty + {@link #permissive} means "no server is
+     * gating us" — single player, a server without KukeCore, or a catalogue that has not been
+     * seeded — and everything is available.
+     */
+    private static final Set<String> UNLOCKED = new HashSet<>();
+    private static volatile boolean permissive = true;
 
     static {
         /* Dance emotes — these have music */
@@ -114,6 +125,29 @@ public final class EmoteRegistry {
 
     public static boolean has(String key) {
         return key != null && EMOTES.containsKey(key);
+    }
+
+    /** Called when the server pushes its unlock list. */
+    public static void setUnlocked(Collection<String> keys, boolean serverPermissive) {
+        UNLOCKED.clear();
+        UNLOCKED.addAll(keys);
+        permissive = serverPermissive;
+    }
+
+    /** Back to "everything available", on disconnect. */
+    public static void clearUnlocks() {
+        UNLOCKED.clear();
+        permissive = true;
+    }
+
+    public static boolean isUnlocked(String key) {
+        if (permissive) {
+            return true;
+        }
+
+        int colon = key.indexOf(':');
+
+        return UNLOCKED.contains(colon >= 0 ? key.substring(0, colon) : key);
     }
 
     public static List<EmoteDefinition> all() {

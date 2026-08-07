@@ -4,10 +4,13 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import kuke.emotes.KukeEmotes;
 import kuke.emotes.client.EmoteClientState;
+import kuke.emotes.client.EmoteRegistry;
 import net.minecraft.client.Minecraft;
 
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
@@ -109,6 +112,7 @@ public final class EmotesBridge {
 
     public static void resetSession() {
         greeted = false;
+        EmoteRegistry.clearUnlocks();
     }
 
     /**
@@ -183,8 +187,18 @@ public final class EmotesBridge {
         switch (action) {
             case HELLO_ACK -> {
                 EmoteClientState.setServerAuthoritative(true);
-                KukeEmotes.LOGGER.info("Emote sync active (server protocol {})",
-                    body.has("protocol") ? body.get("protocol").getAsInt() : -1);
+
+                boolean serverPermissive = !body.has("permissive") || body.get("permissive").getAsBoolean();
+                List<String> unlocked = new ArrayList<>();
+
+                if (body.has("unlocked")) {
+                    body.getAsJsonArray("unlocked").forEach(entry -> unlocked.add(entry.getAsString()));
+                }
+
+                EmoteRegistry.setUnlocked(unlocked, serverPermissive);
+                KukeEmotes.LOGGER.info("Emote sync active (protocol {}, {} unlocked{})",
+                    body.has("protocol") ? body.get("protocol").getAsInt() : -1,
+                    unlocked.size(), serverPermissive ? ", server not gating" : "");
             }
             case STATE -> applyState(body);
             case STATE_BULK -> {

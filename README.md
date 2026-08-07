@@ -3,7 +3,7 @@
 A **client-only** emote mod for Minecraft **1.21.8 / NeoForge**, ported from
 [**McHorse's Emoticons**](https://github.com/mchorse/emoticons).
 
-67 skeletal emotes (dances, gestures, memes), their music, and the props that go with them are the
+61 skeletal emotes (dances, gestures, memes) and the props that go with them are the
 original work of **McHorse** and the Emoticons contributors, taken from the upstream repository
 under the terms of the GNU General Public License v3.0.
 
@@ -21,6 +21,14 @@ under the terms of the GNU General Public License v3.0.
 
 Not ported: the Metamorph morph, the Blockbuster action-recording integration, and the server-side
 capability/command layer.
+
+## Audio
+
+None ships. Upstream declares 16 music tracks in `sounds.json`, but every `.ogg` in the public
+repository is the same 4 KB placeholder (identical checksums) — the real tracks are licensed music
+that was never committed. `EmoteSounds` therefore *looks up* `kukeemotes:<track>` rather than
+registering it: if something else on the client registers those sound events, the dance emotes start
+playing them with no code change here.
 
 ## Licence
 

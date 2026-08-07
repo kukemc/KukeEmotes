@@ -43,6 +43,13 @@ public final class EmoteController {
 
         String resolved = withVariant(emoteKey);
 
+        if (!EmoteRegistry.isUnlocked(resolved)) {
+            player.displayClientMessage(
+                net.minecraft.network.chat.Component.translatable("kukeemotes.ui.locked"), true);
+
+            return false;
+        }
+
         if (!EmoteClientState.start(player.getUUID(), resolved)) {
             return false;
         }
