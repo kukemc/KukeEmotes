@@ -1,0 +1,303 @@
+#PARSE_ESCAPES
+emoticons.translation.credit=Локалізацію зробив Andruxioid, най йому грець.
+
+# GUI and other stuff
+emoticons.keys.category=Емотікони
+emoticons.keys.random=Випадковий емотікон
+emoticons.keys.emote1=Емотікон 1
+emoticons.keys.emote2=Емотікон 2
+emoticons.keys.emote3=Емотікон 3
+emoticons.keys.emote4=Емотікон 4
+emoticons.keys.emote5=Емотікон 5
+emoticons.keys.emote6=Емотікон 6
+emoticons.keys.emotes=Налаштувати емотікони
+emoticons.keys.stop_emote=Зупинити емотікон
+emoticons.keys.reload_emotes=Reload emotes
+
+morph.section.emoticons=Емотіконс
+morph.category.emoticons=Моделі
+
+# Commands
+emoticons.commands.emote.help=Команда емотікона. Клієнтська команда для змінення вашого власного емотікону. Ця команда підтримує можливість перегортання клавішею TAB.\n/emote [назва_эмотикона]
+
+# Blockbuster integration
+blockbuster.gui.record_editor.actions.fc_emote.title=Емотікон
+blockbuster.gui.record_editor.actions.fc_emote.desc=Ця дія відповідає за активацію емотікона. Працює тільки з морфами гравців, що використовують технологію підробного гравця!
+
+# Config
+emoticons.config.title=Эмотиконс
+
+emoticons.config.reload=Reload animations
+emoticons.config.open=Open user folder
+
+emoticons.config.general.title=Загальні
+emoticons.config.general.tooltip=Загальні налаштування Емотіконс
+
+emoticons.config.general.disable_sound_events=Вимкнути звуки анімацій
+emoticons.config.comments.general.disable_sound_events=Чи повинні реєструватися звуки, які видають анімації (корисно для серверів, котрі хочуть вмикнути додаткову сумісніть між модами, ДЛЯ ЗАСТОСУВАННЯ НЕОБХІДЕН ПЕРЕЗАПУСК)
+
+emoticons.config.animations.title=Анімації
+emoticons.config.animations.tooltip=Налаштування анімацій Емотіконс
+
+emoticons.config.animations.disable=Вимкнути анімації не-емотікони
+emoticons.config.comments.animations.disable=Чи повинні відображатися анімації бігу, підкрадання, плавання, польоту тощо?
+emoticons.config.animations.model_type=Model type
+emoticons.config.comments.animations.model_type=Default - it features bends, Simple - it has no bends and also contains less vertices (which theoretically makes it lighter on performance), Extruded - like Default, but it also has extruded bits for outer layers, Simple+ - like Simple, but it features sharp edges which look much nicer
+
+emoticons.config.player_preview.title=Попередній перегляд гравця
+emoticons.config.player_preview.tooltip=Функція попереднього перегляду анімацій гравця у кутку протягом гри у режимі першої особи
+
+emoticons.config.player_preview.mode=Режим попереднього перегляду
+emoticons.config.comments.player_preview.mode=Визначає коли необхідно показувати попередній перегляд анімацій гравця: тільки за емотіконів, завжди чи ніколи
+emoticons.config.player_preview.scale=Розмір
+emoticons.config.comments.player_preview.scale=Розмір попереднього перегляду анімацій гравця
+emoticons.config.player_preview.x=Зсув за X
+emoticons.config.comments.player_preview.x=Зсув попереднього перегляду анімацій гравця за віссю X
+emoticons.config.player_preview.y=Зсув за Y
+emoticons.config.comments.player_preview.y=Зсув попереднього перегляду анімацій гравця за віссю Y
+
+# GUI
+emoticons.gui.title=Емотікони
+emoticons.gui.search=Шукати...
+emoticons.gui.emote=(Емотікон %s)
+emoticons.gui.total_emotes=(Усього %s)
+
+emoticons.gui.editor.context.copy=Copy pose
+emoticons.gui.editor.context.paste=Paste pose
+
+emoticons.player_preview.emote=Тільки за емотіконів
+emoticons.player_preview.always=Завжди
+emoticons.player_preview.never=Ніколи
+
+emoticons.player_model.default=Default
+emoticons.player_model.simple=Simple
+emoticons.player_model.extruded=Extruded
+emoticons.player_model.simple_plus=Simple+
+
+emoticons.gui.morph.general.title=General
+emoticons.gui.morph.general.create_pose=Create pose
+emoticons.gui.morph.general.reset_pose=Reset pose
+emoticons.gui.morph.general.fixed=Fixate movement
+emoticons.gui.morph.general.animated=Animated pose
+emoticons.gui.morph.general.scale=Scale
+emoticons.gui.morph.general.scale_gui=GUI scale
+emoticons.gui.morph.general.scale_items=Items scale
+emoticons.gui.morph.general.render_items=Render items
+emoticons.gui.morph.general.name=Display name
+emoticons.gui.morph.general.head_bone=Head bone
+emoticons.gui.morph.general.placeholder_tooltip=This field allows to setup a placeholder morph, which will be used when Emoticons morph isn't emoting and Disable non-emote animation option enabled...
+emoticons.gui.morph.general.keys.pick_skin=Pick skin
+emoticons.gui.morph.general.context.copy_emote=Copy emote configuration
+
+emoticons.gui.morph.actions.title=Actions
+emoticons.gui.morph.actions.clamp=Clamp
+emoticons.gui.morph.actions.reset=Reset
+emoticons.gui.morph.actions.speed=Speed
+emoticons.gui.morph.actions.fade=Fade
+emoticons.gui.morph.actions.tick=Tick
+emoticons.gui.morph.actions.action=Action
+
+emoticons.gui.morph.meshes.title=Meshes
+emoticons.gui.morph.meshes.pick_texture=Pick texture
+emoticons.gui.morph.meshes.linear=Linear
+emoticons.gui.morph.meshes.normals=Show normals
+emoticons.gui.morph.meshes.smooth=Smooth shading
+emoticons.gui.morph.meshes.visible=Visible
+emoticons.gui.morph.meshes.lighting=Lighting
+emoticons.gui.morph.meshes.texture=Texture
+emoticons.gui.morph.meshes.color=Color
+
+# Emote dances
+emoticons.emotes.best_mates.title=Вправа Марлона
+emoticons.emotes.best_mates.desc=Дяка Марлону Вебу за його файні вайни!
+
+emoticons.emotes.default.title=Танці
+emoticons.emotes.default.desc=Самовиражись у кубах.
+
+emoticons.emotes.disco_fever.title=Танці Діско
+emoticons.emotes.disco_fever.desc=Нумо, нумо!.
+
+emoticons.emotes.electro_shuffle.title=Електрошафл
+emoticons.emotes.electro_shuffle.desc=Діставайте горілку, ми їдемо в Бердичів.
+
+emoticons.emotes.floss.title=Флос
+emoticons.emotes.floss.desc=Дино шо вмію!
+
+emoticons.emotes.hype.title=Хайп
+emoticons.emotes.hype.desc=На хайпі.
+
+emoticons.emotes.infinite_dab.title=Нескінченний Даб
+emoticons.emotes.infinite_dab.desc=Не хочу зупинятися, та й нащо?
+
+emoticons.emotes.orange_justice.title=Помаранчевий Настрій
+emoticons.emotes.orange_justice.desc=А ще це чудова вправа.
+
+emoticons.emotes.star_power.title=Зірка Танцполу
+emoticons.emotes.star_power.desc=Сьогодні автографів не даю.
+
+emoticons.emotes.tidy.title=Чипируха
+emoticons.emotes.tidy.desc=Щось мені гаряче!
+
+emoticons.emotes.fresh.title=Свіжак
+emoticons.emotes.fresh.desc=Для вечірки на пляжі піде.
+
+emoticons.emotes.boneless.title=Без кісток
+emoticons.emotes.boneless.desc=Перезгиб.
+
+emoticons.emotes.gangnam_style.title=ґангнам Стайл
+emoticons.emotes.gangnam_style.desc=Опа Ґангнам Стайл!
+
+emoticons.emotes.take_the_l.title=Переможець зверху
+emoticons.emotes.take_the_l.desc=Той, хто програв знизу.
+
+emoticons.emotes.skibidi.title=Скібіді
+emoticons.emotes.skibidi.desc=Скібіді ва-па-па!
+
+emoticons.emotes.squat_kick.title=Гопак
+emoticons.emotes.squat_kick.desc=Ми туто ногами махаємо
+
+emoticons.emotes.free_flow.title=Струм свідомості
+emoticons.emotes.free_flow.desc=Відчуй рух.
+
+emoticons.emotes.shimmer.title=Миготіння
+emoticons.emotes.shimmer.desc=За межою сасжливого.
+
+emoticons.emotes.get_funky.title=Сміливіше
+emoticons.emotes.get_funky.desc=Відшукай свого ритма.
+
+# Just emotes
+emoticons.emotes.boy.title=Хлопчина
+emoticons.emotes.boy.desc=А це що таке?
+
+emoticons.emotes.chicken.title=Кукурічка
+emoticons.emotes.chicken.desc=Курлик-курлик...
+
+emoticons.emotes.confused.title=Шось незрозуміло
+emoticons.emotes.confused.desc=Дійсно, а що тут трапилося?
+
+emoticons.emotes.dab.title=Даб
+emoticons.emotes.dab.desc=Подабай на хейтерів.
+
+emoticons.emotes.facepalm.title=Рукаобличчя
+emoticons.emotes.facepalm.desc=Хтось так взагалі ще робить?..
+
+emoticons.emotes.popcorn.title=Попкорн
+emoticons.emotes.popcorn.desc=Я прийшов сюди погортати коментарики.
+
+emoticons.emotes.pure_salt.title=Сіль на рани
+emoticons.emotes.pure_salt.desc=Ммм, сілька.
+
+emoticons.emotes.thinking.title=Задуманно
+emoticons.emotes.thinking.desc=Думи мої думи...
+
+emoticons.emotes.wave.title=Привітання
+emoticons.emotes.wave.desc=Агов, чуваче!
+
+emoticons.emotes.laughing.title=Сміх
+emoticons.emotes.laughing.desc=Хахахахахаха..!
+
+emoticons.emotes.crying.title=Плач
+emoticons.emotes.crying.desc=*хник*
+
+emoticons.emotes.yes.title=Так
+emoticons.emotes.yes.desc=Підтверджую
+
+emoticons.emotes.no.title=Ні
+emoticons.emotes.no.desc=На ні й ділу ні.
+
+emoticons.emotes.clapping.title=Оплески
+emoticons.emotes.clapping.desc=Вітаю вас, панове!
+
+emoticons.emotes.calculated.title=Прорахунок
+emoticons.emotes.calculated.desc=Ти не можеш копати під себе, якщо у тебе немає лопати.
+
+emoticons.emotes.bow.title=Поклін
+emoticons.emotes.bow.desc="Для мене честь зустрітися з вами!"
+
+emoticons.emotes.shrug.title=Плечі
+emoticons.emotes.shrug.desc=Та хто його знає...
+
+emoticons.emotes.t_pose.title=Т-поза
+emoticons.emotes.t_pose.desc=*басить*
+
+emoticons.emotes.salute.title=Слава Україні!
+emoticons.emotes.salute.desc=Героям Слава o7
+
+emoticons.emotes.rock_paper_scissors.title=Камінь, ножиці, папір
+emoticons.emotes.rock_paper_scissors.desc=Камінь, ножиці, папір, вила!
+
+emoticons.emotes.fist.title=Кулак
+emoticons.emotes.fist.desc="Мої діаманти!!!"
+
+emoticons.emotes.pointing.title=Вказівка
+emoticons.emotes.pointing.desc=Так, ти.
+
+emoticons.emotes.twerk.title=Тверк
+emoticons.emotes.twerk.desc=Торсай своїм гузном, лярво!
+
+emoticons.emotes.club.title=Клубняк
+emoticons.emotes.club.desc=Бумц бумц бумц бумц.
+
+# Emotes 2020
+emoticons.emotes.bitchslap.title=Шльоп
+emoticons.emotes.bitchslap.desc=*шльоп*
+
+emoticons.emotes.bongo_cat.title=Бонґо Кіт
+emoticons.emotes.bongo_cat.desc=І гадки не маю, що я тут наробив...
+
+emoticons.emotes.breathtaking.title=Чарівність
+emoticons.emotes.breathtaking.desc=О ні, то ви чарівні!
+
+emoticons.emotes.disgusted.title=Огида
+emoticons.emotes.disgusted.desc=Може подзвонити в швидку? Та ні, само пройде...
+
+emoticons.emotes.exhausted.title=Втома
+emoticons.emotes.exhausted.desc=У кожного охронця бувають ці дні...
+
+emoticons.emotes.punch.title=Копняк!
+emoticons.emotes.punch.desc=Пивеуууу
+
+emoticons.emotes.sneeze.title=Пчих
+emoticons.emotes.sneeze.desc=Будьте здорові!
+
+emoticons.emotes.threatening.title=Погроза
+emoticons.emotes.threatening.desc=Тримайся від мене подалі
+
+emoticons.emotes.woah.title=Йой
+emoticons.emotes.woah.desc=Тепер тут є меми з ТікТока
+
+emoticons.emotes.stick_bug.title=Stick Bug
+emoticons.emotes.stick_bug.desc=Get stick bugged lol
+
+emoticons.emotes.am_stuff.title=Am Stuff
+emoticons.emotes.am_stuff.desc=Yes, it's me
+
+emoticons.emotes.slow_clap.title=Slow Clap
+emoticons.emotes.slow_clap.desc=/s
+
+emoticons.emotes.hell_yeah.title=Hell, Yeah!
+emoticons.emotes.hell_yeah.desc=Poggers, bro
+
+emoticons.emotes.paranoid.title=Paranoid
+emoticons.emotes.paranoid.desc=Somebody's watching me?
+
+emoticons.emotes.scared.title=Scared
+emoticons.emotes.scared.desc=Why did it have to be snakes!?
+
+emoticons.emotes.tada.title=Tada!
+emoticons.emotes.tada.desc=There it is!
+
+emoticons.emotes.smug_dance.title=Smug Dance
+emoticons.emotes.smug_dance.desc=Just like the hat kid did it
+
+emoticons.emotes.nope.title=Nope!
+emoticons.emotes.nope.desc=Not good, just nope!
+
+emoticons.emotes.ragdoll_1.title=Ragdoll 1
+emoticons.emotes.ragdoll_1.desc=Lazy simulation #1
+
+emoticons.emotes.ragdoll_2.title=Ragdoll 2
+emoticons.emotes.ragdoll_2.desc=Lazy simulation #2
+
+emoticons.emotes.ragdoll_3.title=Ragdoll 3
+emoticons.emotes.ragdoll_3.desc=Lazy simulation #3
