@@ -48,6 +48,12 @@ public class EmoteMesh {
      */
     private final boolean blockyJoints;
 
+    /**
+     * Debug toggle for the joint stitching, so a suspect pose can be bisected in-game
+     * (/emote debug joints). Not a setting — the stitching is what keeps cube limbs from melting.
+     */
+    public static boolean jointStitchingEnabled = true;
+
     private Joint armLeft;
     private Joint armRight;
     private Joint legLeft;
@@ -167,7 +173,7 @@ public class EmoteMesh {
             newNormals[i * 3 + 2] = this.resultNormal.z;
         }
 
-        if (this.blockyJoints) {
+        if (this.blockyJoints && jointStitchingEnabled) {
             this.processBlockyJoints(newVertices, newNormals);
         }
     }

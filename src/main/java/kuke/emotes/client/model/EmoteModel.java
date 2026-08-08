@@ -45,7 +45,11 @@ public class EmoteModel {
     /** Name of the bone that follows the player's head rotation. */
     public final String headBone;
 
-    public EmoteModel(String name, BOBJLoader.BOBJData data, float scale, String headBone) {
+    /** Whether this model's body needs the blocky-joint stitching (only the low-poly one does). */
+    public final boolean blockyJoints;
+
+    public EmoteModel(String name, BOBJLoader.BOBJData data, float scale, String headBone, boolean blockyJoints) {
+        this.blockyJoints = blockyJoints;
         this.name = name;
         this.scale = scale;
         this.headBone = headBone;
@@ -57,7 +61,7 @@ public class EmoteModel {
 
         for (Map.Entry<String, BOBJLoader.CompiledData> entry : compiled.entrySet()) {
             String meshName = entry.getKey();
-            EmoteMesh mesh = new EmoteMesh(meshName, entry.getValue(), BODY.equals(meshName));
+            EmoteMesh mesh = new EmoteMesh(meshName, entry.getValue(), blockyJoints && BODY.equals(meshName));
 
             this.meshes.add(mesh);
             this.byName.put(meshName, mesh);

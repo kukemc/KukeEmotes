@@ -58,7 +58,8 @@ public final class EmoteController {
 
         Minecraft minecraft = Minecraft.getInstance();
 
-        if (cameraToRestore == null && minecraft.options.getCameraType() == CameraType.FIRST_PERSON) {
+        if (EmoteConfig.autoThirdPerson && cameraToRestore == null
+                && minecraft.options.getCameraType() == CameraType.FIRST_PERSON) {
             cameraToRestore = CameraType.FIRST_PERSON;
             minecraft.options.setCameraType(CameraType.THIRD_PERSON_BACK);
         }

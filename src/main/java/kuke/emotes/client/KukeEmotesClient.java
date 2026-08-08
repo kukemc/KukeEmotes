@@ -41,6 +41,7 @@ public final class KukeEmotesClient {
         modBus.addListener(KukeEmotesClient::onAddReloadListeners);
         modBus.addListener(KukeEmoteKeys::register);
 
+        EmoteConfig.load();
         EmotesBridge.init();
 
         NeoForge.EVENT_BUS.addListener(KukeEmotesClient::onRenderPlayer);
@@ -135,6 +136,28 @@ public final class KukeEmotesClient {
 
                 return 1;
             }))
+            .then(Commands.literal("debug")
+                .then(Commands.literal("joints").then(Commands.argument("on", StringArgumentType.word())
+                    .executes(context -> {
+                        kuke.emotes.client.model.EmoteMesh.jointStitchingEnabled =
+                            !"off".equalsIgnoreCase(StringArgumentType.getString(context, "on"));
+                        context.getSource().sendSuccess(() -> Component.literal("joint stitching = "
+                            + kuke.emotes.client.model.EmoteMesh.jointStitchingEnabled), false);
+
+                        return 1;
+                    }))))
+            /* Which body to draw. Persisted, because it is a taste decision, not a debug flag. */
+            .then(Commands.literal("model")
+                .then(Commands.argument("kind", StringArgumentType.word()).executes(context -> {
+                    EmoteAssets.smoothModel =
+                        !"simple".equalsIgnoreCase(StringArgumentType.getString(context, "kind"));
+                    EmoteConfig.save();
+                    context.getSource().sendSuccess(() -> Component.literal("表情模型 = "
+                        + (EmoteAssets.smoothModel ? "smooth（上游原版，肢体真弯曲）"
+                            : "simple（方块人，关节硬折）")), false);
+
+                    return 1;
+                })))
             .then(Commands.literal("list").executes(context -> {
                 context.getSource().sendSuccess(() -> Component.literal(
                     "KukeEmotes: " + EmoteRegistry.size() + " emotes, assets "
