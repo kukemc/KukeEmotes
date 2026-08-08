@@ -95,17 +95,36 @@ public final class EmoteEffects {
         }
     }
 
-    /** Tears, every other tick, from just in front of the face. */
+    /**
+     * Tears, from both eyes.
+     *
+     * <p>The anchor is worked out from the head bone rather than eyeballed: the bone's origin sits
+     * at y=1.5 with no rotation, a player's eyes are at y≈1.62 and the face is the +Z plane at
+     * z≈0.25 — so eye level is 0.12 above the bone and a hair in front of the face, with the eyes
+     * themselves ±0.075 either side of centre. Upstream's single 0.5/0.35 anchor put the drop above
+     * the crown, which reads as a leak rather than crying once the head starts moving.
+     */
     private static final class CryingEffect implements EmoteEffect {
+
+        private static final float EYE_UP = 0.12F;
+        private static final float EYE_OUT = 0.27F;
+        private static final float EYE_SIDE = 0.075F;
 
         @Override
         public void progress(EmoteEffectContext context, int tick) {
-            /* Upstream drips every other tick; at the modern particle's fall speed that reads as a
-             * leaking pipe rather than tears, so it is thinned out. */
-            if (tick % 3 == 0) {
-                context.particle(ParticleTypes.FALLING_WATER,
-                    context.bonePosition(HEAD, 0F, 0.2F, 0.35F), 0D, 0D, 0D);
+            if (tick % 4 != 0) {
+                return;
             }
+
+            /* Alternate eyes so the drips stagger instead of falling in lockstep. */
+            float side = (tick / 4) % 2 == 0 ? -EYE_SIDE : EYE_SIDE;
+
+            /* Vanilla has no tear: SPLASH throws itself upward, DRIPPING_WATER needs a block
+             * overhead to hang from and vanishes in mid-air, so FALLING_WATER it is — thinned to
+             * one drop per four ticks so it reads as tears rather than a running tap. A real
+             * short-lived tear would need a custom particle type. */
+            context.particle(ParticleTypes.FALLING_WATER,
+                context.bonePosition(HEAD, side, EYE_UP, EYE_OUT), 0D, 0D, 0D);
         }
     }
 

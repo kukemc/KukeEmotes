@@ -132,6 +132,7 @@
   "kukeemotes.emote.yes.desc": "That's correct",
   "kukeemotes.emote.yes.title": "Yes",
   "kukeemotes.translation.credit": "McHorse",
+  "kukeemotes.ui.empty": "No emotes unlocked",
   "kukeemotes.ui.locked": "Locked",
   "kukeemotes.ui.page": "%s / %s",
   "kukeemotes.ui.title": "Emotes"

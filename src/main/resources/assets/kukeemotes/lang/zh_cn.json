@@ -132,6 +132,7 @@
   "kukeemotes.emote.yes.desc": "说的没错",
   "kukeemotes.emote.yes.title": "没错(yes)",
   "kukeemotes.translation.credit": "Chunk7",
+  "kukeemotes.ui.empty": "还没有解锁任何表情",
   "kukeemotes.ui.locked": "未解锁",
   "kukeemotes.ui.page": "%s / %s",
   "kukeemotes.ui.title": "表情"
