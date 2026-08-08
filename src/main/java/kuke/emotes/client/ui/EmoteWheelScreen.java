@@ -1,11 +1,14 @@
 package kuke.emotes.client.ui;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import kuke.emotes.client.EmoteController;
 import kuke.emotes.client.EmoteDefinition;
 import kuke.emotes.client.EmoteRegistry;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
 import java.util.ArrayList;
@@ -14,44 +17,30 @@ import java.util.List;
 /**
  * The emote wheel: hold the key, point a direction, let go to perform it.
  *
- * <p>A real ring of wedges rather than a row of boxes. {@link GuiGraphics} can only fill
- * axis-aligned rectangles, so the ring is drawn by scanning it row by row: every column of a row is
- * classified (which wedge, which radial band, or outside) and consecutive columns with the same
- * classification collapse into one {@code fill}. That is a few hundred rectangles a frame — cheap —
- * and it buys smooth arcs, per-wedge highlighting and a radial fade that a grid of boxes cannot.
+ * <p>Drawn from three generated textures (see {@link EmoteWheelTextures}) rather than from
+ * rectangles — {@code GuiGraphics} can only fill axis-aligned integer rects, and a ring built out
+ * of those is a staircase no matter how it is coloured. One blit for the ring, one rotated blit per
+ * lit wedge, one for the hub.
  *
- * <p>Aiming is by <b>angle</b>, with a dead zone in the middle: flick the mouse in a direction and
- * release. Only unlocked emotes are listed.
+ * <p>Aiming is by <b>angle</b> with a dead zone in the middle, so a flick of the mouse picks a slot
+ * and releasing while centred cancels. Only unlocked emotes are listed.
  */
 public final class EmoteWheelScreen extends Screen {
 
+    private static final RenderPipeline PIPELINE = RenderPipelines.GUI_TEXTURED;
+
     private static final int SLOTS = 8;
 
-    /* Dark-and-gold, matching the quest HUD: near-black glass with a thin gold edge. */
-    private static final int GOLD = 0xD9B45A;
-    private static final int GOLD_DIM = 0x8C7434;
-    private static final int TEXT = 0xE8E2D4;
-    private static final int TEXT_DIM = 0x9A9184;
+    private static final int GOLD = 0xE7C87A;
+    private static final int GOLD_DIM = 0x8A7440;
+    private static final int TEXT = 0xEDE7DA;
+    private static final int TEXT_DIM = 0x9E968A;
 
-    /** Ring radii at full open, before the selected wedge's bump. */
-    private static final int INNER_RADIUS = 54;
-    private static final int OUTER_RADIUS = 122;
-
-    /** How far the selected wedge grows outward — the "pop" that makes aiming feel responsive. */
-    private static final int SELECT_BUMP = 7;
-
-    /** Space between wedges, in degrees, drawn as a gap rather than a line. */
-    private static final double WEDGE_GAP_DEGREES = 1.6D;
-
-    /** Nothing is selected inside this radius, so releasing without aiming cancels. */
-    private static final double DEAD_ZONE = INNER_RADIUS - 6;
+    /** Drawn diameter of the ring, in GUI pixels, at full open. */
+    private static final int WHEEL_SIZE = 268;
 
     /** Open animation length, in seconds. */
-    private static final float OPEN_SECONDS = 0.16F;
-
-    /* Scan-line classification keys that are not a wedge. */
-    private static final int KEY_CENTRE = -2;
-    private static final int KEY_GAP = -3;
+    private static final float OPEN_SECONDS = 0.18F;
 
     private final List<EmoteDefinition> catalogue = new ArrayList<>();
     private final int pages;
@@ -59,16 +48,21 @@ public final class EmoteWheelScreen extends Screen {
     private int page;
     private int selected = -1;
 
-    /** 0..1 open progress, eased. */
     private float open;
     private long openedAt;
     private long lastFrameAt;
 
-    /** Per-slot highlight, chased toward 0/1 each frame so selection fades rather than snaps. */
+    /** Per-slot highlight, chased each frame so selection cross-fades instead of flicking. */
     private final float[] glow = new float[SLOTS];
 
-    /** Remembered across openings — the wheel comes back where you left it. */
     private static int lastPage;
+
+    /**
+     * Forces a slot to read as selected. Only set by {@code /emote debug select}: the automated
+     * lab warps the system cursor, which an unfocused window ignores, so hover states cannot be
+     * screenshotted any other way.
+     */
+    public static int debugForcedSlot = -1;
 
     public EmoteWheelScreen() {
         super(Component.translatable("kukeemotes.ui.title"));
@@ -85,6 +79,7 @@ public final class EmoteWheelScreen extends Screen {
 
     @Override
     protected void init() {
+        EmoteWheelTextures.ensureBuilt();
         this.openedAt = System.currentTimeMillis();
     }
 
@@ -103,7 +98,6 @@ public final class EmoteWheelScreen extends Screen {
         return index < this.catalogue.size() ? this.catalogue.get(index) : null;
     }
 
-    /** Play what is aimed at and close. Called when the wheel key is released. */
     public void confirmAndClose() {
         EmoteDefinition definition = this.selectedEmote();
 
@@ -159,7 +153,7 @@ public final class EmoteWheelScreen extends Screen {
 
     @Override
     public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        /* No vanilla dim or blur: the wheel's own glass is the only thing that should darken the view. */
+        /* No vanilla dim or blur: the wheel's own glass is all the darkening there should be. */
     }
 
     @Override
@@ -170,7 +164,9 @@ public final class EmoteWheelScreen extends Screen {
         int centerX = this.width / 2;
         int centerY = this.height / 2;
 
-        this.selected = this.slotAt(mouseX - centerX, mouseY - centerY);
+        this.selected = debugForcedSlot >= 0
+            ? debugForcedSlot
+            : this.slotAt(mouseX - centerX, mouseY - centerY);
         this.advanceGlow();
 
         if (this.catalogue.isEmpty()) {
@@ -180,9 +176,16 @@ public final class EmoteWheelScreen extends Screen {
             return;
         }
 
-        this.drawRing(graphics, centerX, centerY);
-        this.drawLabels(graphics, centerX, centerY);
-        this.drawCentre(graphics, centerX, centerY);
+        float scale = 0.92F + 0.08F * this.open;
+        int size = Math.round(WHEEL_SIZE * scale);
+        int alpha = (int) (this.open * 255F);
+
+        blit(graphics, EmoteWheelTextures.RING, centerX, centerY, size, (alpha << 24) | 0xFFFFFF);
+        this.drawWedges(graphics, centerX, centerY, size, alpha);
+        blit(graphics, EmoteWheelTextures.HUB, centerX, centerY, size, (alpha << 24) | 0xFFFFFF);
+
+        this.drawLabels(graphics, centerX, centerY, size, alpha);
+        this.drawCentreText(graphics, centerX, centerY, alpha);
     }
 
     /** Smoothstep — the wheel should arrive, not snap. */
@@ -190,151 +193,62 @@ public final class EmoteWheelScreen extends Screen {
         return t * t * (3F - 2F * t);
     }
 
-    /** Chase each slot's highlight toward its target. Frame-rate independent. */
     private void advanceGlow() {
         long now = System.currentTimeMillis();
         float dt = this.lastFrameAt == 0L ? 0.016F : Math.min((now - this.lastFrameAt) / 1000F, 0.1F);
 
         this.lastFrameAt = now;
 
-        float rate = Math.min(1F, dt * 14F);
+        float rate = Math.min(1F, dt * 16F);
 
         for (int slot = 0; slot < SLOTS; slot++) {
-            float target = slot == this.selected ? 1F : 0F;
+            float target = slot == this.selected && this.emoteAt(slot) != null ? 1F : 0F;
 
             this.glow[slot] += (target - this.glow[slot]) * rate;
         }
     }
 
     /**
-     * Scan-line pass over the ring: one row at a time, one rectangle per run of columns that share
-     * a (wedge, band) classification.
+     * One rotated blit per lit wedge. Rotating the pose instead of baking eight textures keeps the
+     * highlight identical in every direction, and lets a fading-out wedge overlap a fading-in one.
      */
-    private void drawRing(GuiGraphics graphics, int centerX, int centerY) {
-        float scale = 0.88F + 0.12F * this.open;
-        int inner = (int) (INNER_RADIUS * scale);
-        int outerBase = (int) (OUTER_RADIUS * scale);
-        int outerMax = outerBase + SELECT_BUMP;
+    private void drawWedges(GuiGraphics graphics, int centerX, int centerY, int size, int alpha) {
+        for (int slot = 0; slot < SLOTS; slot++) {
+            float lit = this.glow[slot];
 
-        double gap = Math.toRadians(WEDGE_GAP_DEGREES);
-        double step = Math.PI * 2 / SLOTS;
-        int innerSq = inner * inner;
-
-        for (int dy = -outerMax; dy <= outerMax; dy++) {
-            int runStart = 0;
-            int runKey = Integer.MIN_VALUE;
-
-            for (int dx = -outerMax; dx <= outerMax + 1; dx++) {
-                int key = Integer.MIN_VALUE;
-
-                if (dx <= outerMax) {
-                    int distSq = dx * dx + dy * dy;
-
-                    if (distSq < innerSq) {
-                        /* Centre disc: the label on it has to stay readable over the world. */
-                        key = KEY_CENTRE;
-                    } else {
-                        int slot = this.wedgeAt(dx, dy, step, gap);
-                        int forRadius = slot < 0 ? this.selected : slot;
-                        int outer = outerBase
-                            + (int) (SELECT_BUMP * (forRadius >= 0 ? this.glow[forRadius] : 0F));
-
-                        if (distSq <= outer * outer) {
-                            if (slot < 0 || this.emoteAt(slot) == null) {
-                                /* The gap between wedges, and any empty slot, stay dark glass —
-                                 * leaving a hole there reads as a bright spoke of sky. */
-                                key = KEY_GAP;
-                            } else {
-                                double dist = Math.sqrt(distSq);
-                                int band = dist >= outer - 1.5D
-                                    ? 3
-                                    : dist <= inner + 1.0D
-                                        ? 4
-                                        : Math.min(2, (int) ((dist - inner) / (double) (outer - inner) * 3D));
-
-                                key = slot * 8 + band;
-                            }
-                        }
-                    }
-                }
-
-                if (key != runKey) {
-                    if (runKey != Integer.MIN_VALUE) {
-                        graphics.fill(centerX + runStart, centerY + dy, centerX + dx, centerY + dy + 1,
-                            this.colourFor(runKey));
-                    }
-
-                    runKey = key;
-                    runStart = dx;
-                }
+            if (lit <= 0.01F) {
+                continue;
             }
+
+            int wedgeAlpha = (int) (alpha * lit);
+
+            if (wedgeAlpha <= 0) {
+                continue;
+            }
+
+            graphics.pose().pushMatrix();
+            graphics.pose().translate(centerX, centerY);
+            graphics.pose().rotate((float) (slot * (Math.PI * 2 / SLOTS)));
+            /* The lit wedge swells very slightly — enough to feel, not enough to show a seam. */
+            graphics.pose().scale(1F + 0.015F * lit, 1F + 0.015F * lit);
+            graphics.pose().translate(-centerX, -centerY);
+
+            blit(graphics, EmoteWheelTextures.WEDGE, centerX, centerY, size,
+                (wedgeAlpha << 24) | 0xFFFFFF);
+
+            graphics.pose().popMatrix();
         }
     }
 
-    /** Which wedge an offset belongs to, or -1 when it falls in the gap between two. */
-    private int wedgeAt(int dx, int dy, double step, double gap) {
-        double angle = Math.atan2(dy, dx) + Math.PI / 2 + step / 2;
-        double normalised = (angle % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
-        double within = normalised % step;
-
-        if (within < gap / 2 || within > step - gap / 2) {
-            return -1;
-        }
-
-        return (int) (normalised / step) % SLOTS;
+    private static void blit(GuiGraphics graphics, ResourceLocation texture,
+            int centerX, int centerY, int size, int colour) {
+        graphics.blit(PIPELINE, texture, centerX - size / 2, centerY - size / 2,
+            0F, 0F, size, size, size, size, colour);
     }
 
-    private int colourFor(int key) {
-        if (key == KEY_CENTRE) {
-            return (int) (this.open * 248F) << 24;
-        }
-
-        if (key == KEY_GAP) {
-            return (int) (this.open * 242F) << 24;
-        }
-
-        return this.bandColour(key / 8, key % 8);
-    }
-
-    /**
-     * Glass colour for one band of one wedge. Unselected is near-black and fades outward so the
-     * ring melts into the world at its edge; selected warms toward gold. Driven by {@link #glow},
-     * so moving between wedges cross-fades instead of flicking.
-     */
-    private int bandColour(int slot, int band) {
-        float lit = this.glow[slot];
-
-        if (band == 3) {
-            int alpha = (int) (this.open * Mth.lerp(lit, 110F, 255F));
-
-            return (alpha << 24) | lerpColour(GOLD_DIM, GOLD, lit);
-        }
-
-        if (band == 4) {
-            /* Inner hairline: enough to separate ring from hub, not enough to read as a halo. */
-            int alpha = (int) (this.open * Mth.lerp(lit, 64F, 200F));
-
-            return (alpha << 24) | lerpColour(GOLD_DIM, GOLD, lit);
-        }
-
-        float fade = 1F - band * 0.07F;
-        int alpha = (int) (this.open * Mth.lerp(lit, 240F, 248F) * fade);
-
-        return (alpha << 24) | lerpColour(0x040407, 0x4A3A16, lit);
-    }
-
-    private static int lerpColour(int from, int to, float t) {
-        int r = (int) Mth.lerp(t, (from >> 16) & 0xFF, (to >> 16) & 0xFF);
-        int g = (int) Mth.lerp(t, (from >> 8) & 0xFF, (to >> 8) & 0xFF);
-        int b = (int) Mth.lerp(t, from & 0xFF, to & 0xFF);
-
-        return (r << 16) | (g << 8) | b;
-    }
-
-    private void drawLabels(GuiGraphics graphics, int centerX, int centerY) {
-        float scale = 0.88F + 0.12F * this.open;
-        int labelRadius = (int) ((INNER_RADIUS + OUTER_RADIUS) / 2F * scale);
-        int alpha = (int) (this.open * 255F) << 24;
+    private void drawLabels(GuiGraphics graphics, int centerX, int centerY, int size, int alpha) {
+        float radius = size / 2F
+            * (EmoteWheelTextures.innerFraction() + EmoteWheelTextures.outerFraction()) / 2F;
 
         for (int slot = 0; slot < SLOTS; slot++) {
             EmoteDefinition definition = this.emoteAt(slot);
@@ -344,45 +258,52 @@ public final class EmoteWheelScreen extends Screen {
             }
 
             double angle = slot * (Math.PI * 2 / SLOTS) - Math.PI / 2;
-            int radius = labelRadius + (int) (SELECT_BUMP / 2F * this.glow[slot]);
-            int x = centerX + (int) Math.round(Math.cos(angle) * radius);
-            int y = centerY + (int) Math.round(Math.sin(angle) * radius) - this.font.lineHeight / 2;
+            float lit = this.glow[slot];
+            float distance = radius + 3F * lit;
+            int x = centerX + (int) Math.round(Math.cos(angle) * distance);
+            int y = centerY + (int) Math.round(Math.sin(angle) * distance) - this.font.lineHeight / 2;
 
             graphics.drawCenteredString(this.font, definition.shortTitle(), x, y,
-                alpha | lerpColour(TEXT, GOLD, this.glow[slot]));
+                (alpha << 24) | (lit > 0.5F ? GOLD : TEXT));
         }
     }
 
-    private void drawCentre(GuiGraphics graphics, int centerX, int centerY) {
-        int alpha = (int) (this.open * 255F) << 24;
+    private void drawCentreText(GuiGraphics graphics, int centerX, int centerY, int alpha) {
         EmoteDefinition definition = this.selectedEmote();
 
         if (definition == null) {
             graphics.drawCenteredString(this.font, Component.translatable("kukeemotes.ui.title"),
-                centerX, centerY - 4, alpha | TEXT_DIM);
+                centerX, centerY - 4, (alpha << 24) | TEXT_DIM);
         } else {
-            graphics.drawCenteredString(this.font, definition.shortTitle(),
-                centerX, centerY - 12, alpha | GOLD);
+            /* The picked emote's name is the one thing worth enlarging. */
+            graphics.pose().pushMatrix();
+            graphics.pose().translate(centerX, centerY - 16);
+            graphics.pose().scale(1.25F, 1.25F);
+            graphics.drawCenteredString(this.font, definition.shortTitle(), 0, 0,
+                (alpha << 24) | GOLD);
+            graphics.pose().popMatrix();
 
             String description = definition.description().getString();
 
             if (!description.isEmpty()) {
                 graphics.drawCenteredString(this.font,
-                    this.font.plainSubstrByWidth(description, INNER_RADIUS * 2 - 16),
-                    centerX, centerY + 1, alpha | TEXT_DIM);
+                    this.font.plainSubstrByWidth(description, 96),
+                    centerX, centerY + 3, (alpha << 24) | TEXT_DIM);
             }
         }
 
         if (this.pages > 1) {
             graphics.drawCenteredString(this.font,
                 Component.translatable("kukeemotes.ui.page", this.page + 1, this.pages),
-                centerX, centerY + 14, alpha | GOLD_DIM);
+                centerX, centerY + 17, (alpha << 24) | GOLD_DIM);
         }
     }
 
-    /** Which wedge the cursor points at, ignoring the gaps so aiming never falls between slots. */
+    /** Which wedge the cursor points at, or -1 in the dead zone. */
     private int slotAt(int dx, int dy) {
-        if (Math.sqrt((double) dx * dx + (double) dy * dy) < DEAD_ZONE) {
+        float deadZone = WHEEL_SIZE / 2F * EmoteWheelTextures.innerFraction() - 4F;
+
+        if (Math.sqrt((double) dx * dx + (double) dy * dy) < deadZone) {
             return -1;
         }
 

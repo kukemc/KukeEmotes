@@ -137,6 +137,13 @@ public final class KukeEmotesClient {
                 return 1;
             }))
             .then(Commands.literal("debug")
+                .then(Commands.literal("select").then(Commands.argument("slot", StringArgumentType.word())
+                    .executes(context -> {
+                        kuke.emotes.client.ui.EmoteWheelScreen.debugForcedSlot =
+                            Integer.parseInt(StringArgumentType.getString(context, "slot"));
+
+                        return 1;
+                    })))
                 .then(Commands.literal("joints").then(Commands.argument("on", StringArgumentType.word())
                     .executes(context -> {
                         kuke.emotes.client.model.EmoteMesh.jointStitchingEnabled =
