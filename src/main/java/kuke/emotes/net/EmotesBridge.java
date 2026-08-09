@@ -53,6 +53,9 @@ public final class EmotesBridge {
     /** Whether we have already said hello on this connection. */
     private static boolean greeted;
 
+    /** Ticks spent waiting for KukeUI's bridge to come up, for the log line in {@link #tick()}. */
+    private static int waitedTicks;
+
     private EmotesBridge() {
     }
 
@@ -112,6 +115,7 @@ public final class EmotesBridge {
 
     public static void resetSession() {
         greeted = false;
+        waitedTicks = 0;
         EmoteRegistry.clearUnlocks();
     }
 
@@ -120,7 +124,22 @@ public final class EmotesBridge {
      * compare protocol versions. Called every tick; cheap and idempotent.
      */
     public static void tick() {
-        if (greeted || !isAvailable()) {
+        if (greeted) {
+            return;
+        }
+
+        /*
+         * KukeUI only flips its bridge to "available" once the server has sent this client a UI
+         * payload — until then sendRaw refuses everything. That can be a long way into a session,
+         * so the wait is logged: a client that never gets here is one whose emotes will look local
+         * to everybody else, and that is worth seeing in the log rather than inferring.
+         */
+        if (!isAvailable()) {
+            if (Minecraft.getInstance().getConnection() != null && ++waitedTicks % 200 == 0) {
+                KukeEmotes.LOGGER.info("[emote] still waiting for the KukeUI bridge ({}s in)",
+                    waitedTicks / 20);
+            }
+
             return;
         }
 
@@ -130,6 +149,8 @@ public final class EmotesBridge {
 
         if (send(HELLO, body)) {
             greeted = true;
+            KukeEmotes.LOGGER.info("[emote] hello sent (protocol {}); waiting for the server's ack",
+                PROTOCOL);
         }
     }
 
@@ -138,7 +159,12 @@ public final class EmotesBridge {
         JsonObject body = new JsonObject();
         body.addProperty("key", emoteKey);
 
-        return send(PLAY, body);
+        boolean sent = send(PLAY, body);
+
+        KukeEmotes.LOGGER.info("[emote] play {} -> server: {}", emoteKey,
+            sent ? "sent" : "not sent (no bridge; emote stays local)");
+
+        return sent;
     }
 
     public static boolean requestStop() {
@@ -221,9 +247,13 @@ public final class EmotesBridge {
         String key = entry.has("key") ? entry.get("key").getAsString() : "";
 
         if (key.isEmpty()) {
+            if (EmoteClientState.isEmoting(uuid)) {
+                KukeEmotes.LOGGER.info("[emote] server stopped {}'s emote", uuid);
+            }
+
             EmoteClientState.stop(uuid);
         } else {
-            EmoteClientState.start(uuid, key);
+            EmoteClientState.startFromServer(uuid, key);
         }
     }
 }

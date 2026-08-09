@@ -92,6 +92,13 @@ public final class EmoteSession {
         return this.variant;
     }
 
+    /** The key as it travels over the wire, variant suffix and all. */
+    public String fullKey() {
+        return this.variant.isEmpty()
+            ? this.definition.key()
+            : this.definition.key() + ":" + this.variant;
+    }
+
     public void tick() {
         this.elapsed++;
         this.playback.update();

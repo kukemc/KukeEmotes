@@ -83,6 +83,25 @@ public final class EmoteClientState {
         return true;
     }
 
+    /**
+     * Start an emote the server told us about.
+     *
+     * <p>Unlike {@link #start} this is a no-op when that player is already running that exact
+     * emote: the server echoes back the {@code play} it accepted, and so does a {@code state_bulk}
+     * catch-up, and restarting on the echo would throw the animation back to frame zero a round
+     * trip after it began — which reads as the emote stuttering, or stopping outright on a short
+     * one. Pressing the same emote again locally still restarts it, as it should.
+     */
+    public static boolean startFromServer(UUID player, String emoteKey) {
+        EmoteSession current = SESSIONS.get(player);
+
+        if (current != null && !current.playback.isFading() && emoteKey.equals(current.fullKey())) {
+            return true;
+        }
+
+        return start(player, emoteKey);
+    }
+
     /** Stop immediately, without the fade-out (used when the player is gone). */
     public static void clear(UUID player) {
         SESSIONS.remove(player);
@@ -145,13 +164,19 @@ public final class EmoteClientState {
             }
 
             if (session.isFinished()) {
+                KukeEmotes.LOGGER.info("[emote] finished {} for {} after {} ticks",
+                    session.fullKey(), player.getGameProfile().getName(), session.elapsed());
                 it.remove();
                 LAST_POSITIONS.remove(uuid);
 
                 continue;
             }
 
-            if (shouldInterrupt(uuid, player, session)) {
+            String reason = interruptReason(uuid, player, session);
+
+            if (reason != null) {
+                KukeEmotes.LOGGER.info("[emote] {} -> stop {} for {} at tick {}", reason,
+                    session.fullKey(), player.getGameProfile().getName(), session.elapsed());
                 session.requestStop();
             }
         }
@@ -168,22 +193,37 @@ public final class EmoteClientState {
             SoundSource.MASTER, EmoteSounds.VOLUME, 1F, false);
     }
 
-    private static boolean shouldInterrupt(UUID uuid, Player player, EmoteSession session) {
+    /** @return why this emote should stop, or null to keep playing. Logged, so keep it terse. */
+    @Nullable
+    private static String interruptReason(UUID uuid, Player player, EmoteSession session) {
         if (session.isExpired()) {
-            return true;
+            return "expired(" + session.definition.duration() + ")";
+        }
+
+        /*
+         * Only ever movement-check the player sitting at this keyboard. Everyone else is a
+         * RemotePlayer whose position is interpolated toward the server's, so it drifts by a
+         * fraction of a block every tick even while they stand perfectly still — measuring that
+         * against a 0.015 threshold cancels every remote emote within a tick or two of it starting.
+         * Whether a remote player moved is the server's call, and it sends a stop when they do.
+         */
+        Minecraft minecraft = Minecraft.getInstance();
+
+        if (minecraft.player == null || !uuid.equals(minecraft.player.getUUID())) {
+            return null;
         }
 
         Vec3 position = player.position();
         Vec3 last = LAST_POSITIONS.put(uuid, position);
 
         if (last == null) {
-            return false;
+            return null;
         }
 
         /* Upstream sums the signed per-axis deltas rather than taking a distance; keep that so the
          * client and the KukeCore half agree on when an emote breaks. */
         double delta = Math.abs(position.x - last.x + (position.y - last.y) + (position.z - last.z));
 
-        return delta > MOVE_EPSILON;
+        return delta > MOVE_EPSILON ? String.format("moved(%.4f)", delta) : null;
     }
 }
