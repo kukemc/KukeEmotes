@@ -29,12 +29,16 @@ public final class EmoteWheelTextures {
     private static final int SIZE = 512;
     private static final float CENTRE = SIZE / 2F;
 
-    /* Normalised radii (fraction of the texture's half-width). */
-    private static final float RING_INNER = 0.395F;
+    /* Normalised radii (fraction of the texture's half-width). The hub is well clear of the
+     * ring's inner edge — the transparent gap between them is what makes this read as a radial
+     * menu instead of a solid disc. */
+    private static final float RING_INNER = 0.560F;
     private static final float RING_OUTER = 0.965F;
-    /** Deliberately larger than {@link #RING_INNER}: the two must overlap, or the gap
-     * between them shows the world through as a bright ring. */
-    private static final float HUB_RADIUS = 0.420F;
+    private static final float HUB_RADIUS = 0.300F;
+
+    /** Slot boundaries sit at 22.5° + k·45° from straight up; a hairline is baked at each. */
+    private static final float SEPARATOR_STEP = (float) (Math.PI / 4);
+    private static final float SEPARATOR_OFFSET = (float) (Math.PI / 8);
 
     /** Half-width of a wedge, in radians: 45° minus a small breathing gap. */
     private static final float WEDGE_HALF = (float) Math.toRadians(21.2D);
@@ -138,13 +142,31 @@ public final class EmoteWheelTextures {
                 }
 
                 float t = (dist - RING_INNER) / (RING_OUTER - RING_INNER);
-                float glassAlpha = (0.90F - 0.16F * t) * coverage;
-                int pixel = argb(glassAlpha, 0x0A0910);
+                /* Dark enough to hold its own against a bright sky; most opaque mid-band,
+                 * where the labels sit. */
+                float band = 1F - Math.abs(t - 0.42F) * 0.55F;
+                float glassAlpha = 0.82F * band * coverage;
+                int pixel = argb(glassAlpha, 0x0C0B14);
 
-                /* Outer rim: a soft gold line that bleeds a couple of pixels inward. */
+                /* Hairline between neighbouring slots, fading toward both edges. */
+                float boundary = Math.abs((Math.abs((float) Math.atan2(dx, -dy)) - SEPARATOR_OFFSET)
+                    % SEPARATOR_STEP);
+                float toBoundary = Math.min(boundary, SEPARATOR_STEP - boundary) * dist;
+                float separator = (1F - smoothstep(px * 0.5F, px * 2.0F, toBoundary))
+                    * (1F - smoothstep(0.55F, 1F, t)) * smoothstep(0F, 0.12F, t);
+                if (separator > 0F) {
+                    pixel = over(pixel, argb(separator * 0.38F * coverage, 0xC9A550));
+                }
+
+                /* Gold rims: a firm line at the outer edge, a fainter one at the inner. */
                 float outerRim = 1F - smoothstep(0F, px * 3.5F, Math.abs(dist - (RING_OUTER - px * 1.6F)));
                 if (outerRim > 0F) {
                     pixel = over(pixel, argb(outerRim * 0.85F * coverage, 0xD9B45A));
+                }
+
+                float innerRim = 1F - smoothstep(0F, px * 2.5F, Math.abs(dist - (RING_INNER + px * 1.4F)));
+                if (innerRim > 0F) {
+                    pixel = over(pixel, argb(innerRim * 0.50F * coverage, 0xC9A550));
                 }
 
                 image.setPixel(x, y, pixel);
@@ -190,13 +212,19 @@ public final class EmoteWheelTextures {
 
                 float t = (dist - RING_INNER) / (RING_OUTER - RING_INNER);
                 /* Brighter near the hub, so the highlight looks lit from the centre outward. */
-                float body = (0.46F - 0.13F * t) * radial * angular;
-                int pixel = argb(body, 0xE0BC6A);
+                float body = (0.55F - 0.20F * t) * radial * angular;
+                int pixel = argb(body, 0xE8C264);
 
                 float arc = 1F - smoothstep(0F, px * 6F, Math.abs(dist - (RING_OUTER - px * 2.2F)));
 
                 if (arc > 0F) {
                     pixel = over(pixel, argb(arc * angular * 0.95F, 0xFFE6A8));
+                }
+
+                float innerArc = 1F - smoothstep(0F, px * 4F, Math.abs(dist - (RING_INNER + px * 1.8F)));
+
+                if (innerArc > 0F) {
+                    pixel = over(pixel, argb(innerArc * angular * 0.70F, 0xFFE6A8));
                 }
 
                 image.setPixel(x, y, pixel);
@@ -227,12 +255,12 @@ public final class EmoteWheelTextures {
 
                 /* A touch lighter at the very centre keeps it from looking like a hole. */
                 float lift = 0.06F * (1F - smoothstep(0F, HUB_RADIUS, dist));
-                int pixel = argb((0.86F + lift) * coverage, 0x07060B);
+                int pixel = argb((0.72F + lift) * coverage, 0x0A0912);
 
                 float rim = 1F - smoothstep(0F, px * 2.6F, Math.abs(dist - (HUB_RADIUS - px * 1.3F)));
 
                 if (rim > 0F) {
-                    pixel = over(pixel, argb(rim * 0.45F * coverage, 0xC9A550));
+                    pixel = over(pixel, argb(rim * 0.60F * coverage, 0xC9A550));
                 }
 
                 image.setPixel(x, y, pixel);
@@ -249,5 +277,9 @@ public final class EmoteWheelTextures {
 
     public static float innerFraction() {
         return RING_INNER;
+    }
+
+    public static float hubFraction() {
+        return HUB_RADIUS;
     }
 }

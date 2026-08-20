@@ -185,7 +185,7 @@ public final class EmoteWheelScreen extends Screen {
         blit(graphics, EmoteWheelTextures.HUB, centerX, centerY, size, (alpha << 24) | 0xFFFFFF);
 
         this.drawLabels(graphics, centerX, centerY, size, alpha);
-        this.drawCentreText(graphics, centerX, centerY, alpha);
+        this.drawCentreText(graphics, centerX, centerY, size, alpha);
     }
 
     /** Smoothstep — the wheel should arrive, not snap. */
@@ -263,45 +263,70 @@ public final class EmoteWheelScreen extends Screen {
             int x = centerX + (int) Math.round(Math.cos(angle) * distance);
             int y = centerY + (int) Math.round(Math.sin(angle) * distance) - this.font.lineHeight / 2;
 
+            /* On the gold highlight the label flips dark, or it would drown in the wedge. */
             graphics.drawCenteredString(this.font, definition.shortTitle(), x, y,
-                (alpha << 24) | (lit > 0.5F ? GOLD : TEXT));
+                (alpha << 24) | (lit > 0.5F ? 0x2A1F08 : TEXT));
         }
     }
 
-    private void drawCentreText(GuiGraphics graphics, int centerX, int centerY, int alpha) {
+    private void drawCentreText(GuiGraphics graphics, int centerX, int centerY, int size, int alpha) {
         EmoteDefinition definition = this.selectedEmote();
 
+        /* The hub holds one thing only: the picked emote's name (or the title while idle). */
         if (definition == null) {
             graphics.drawCenteredString(this.font, Component.translatable("kukeemotes.ui.title"),
                 centerX, centerY - 4, (alpha << 24) | TEXT_DIM);
         } else {
-            /* The picked emote's name is the one thing worth enlarging. */
             graphics.pose().pushMatrix();
-            graphics.pose().translate(centerX, centerY - 16);
-            graphics.pose().scale(1.25F, 1.25F);
+            graphics.pose().translate(centerX, centerY - 4);
+            graphics.pose().scale(1.15F, 1.15F);
             graphics.drawCenteredString(this.font, definition.shortTitle(), 0, 0,
                 (alpha << 24) | GOLD);
             graphics.pose().popMatrix();
+        }
 
+        /* Everything secondary lives below the wheel, off the artwork. */
+        int below = centerY + size / 2 + 6;
+
+        if (definition != null) {
             String description = definition.description().getString();
 
             if (!description.isEmpty()) {
                 graphics.drawCenteredString(this.font,
-                    this.font.plainSubstrByWidth(description, 96),
-                    centerX, centerY + 3, (alpha << 24) | TEXT_DIM);
+                    this.font.plainSubstrByWidth(description, 220),
+                    centerX, below, (alpha << 24) | TEXT_DIM);
+                below += this.font.lineHeight + 3;
             }
         }
 
         if (this.pages > 1) {
-            graphics.drawCenteredString(this.font,
-                Component.translatable("kukeemotes.ui.page", this.page + 1, this.pages),
-                centerX, centerY + 17, (alpha << 24) | GOLD_DIM);
+            this.drawPageDots(graphics, centerX, below + 2, alpha);
+        }
+    }
+
+    /** One dot per page, the current one gold and slightly larger. */
+    private void drawPageDots(GuiGraphics graphics, int centerX, int y, int alpha) {
+        int spacing = 8;
+        int left = centerX - (this.pages - 1) * spacing / 2;
+
+        for (int i = 0; i < this.pages; i++) {
+            int x = left + i * spacing;
+
+            if (i == this.page) {
+                graphics.fill(x - 2, y - 2, x + 2, y + 2, (alpha << 24) | GOLD);
+            } else {
+                graphics.fill(x - 1, y - 1, x + 1, y + 1,
+                    ((int) (alpha * 0.7F) << 24) | GOLD_DIM);
+            }
         }
     }
 
     /** Which wedge the cursor points at, or -1 in the dead zone. */
     private int slotAt(int dx, int dy) {
-        float deadZone = WHEEL_SIZE / 2F * EmoteWheelTextures.innerFraction() - 4F;
+        /* Cancel zone reaches midway across the gap between hub and ring, so aiming does not
+         * demand pixel accuracy but resting near the centre still cancels. */
+        float deadZone = WHEEL_SIZE / 2F
+            * (EmoteWheelTextures.hubFraction() + EmoteWheelTextures.innerFraction()) / 2F;
 
         if (Math.sqrt((double) dx * dx + (double) dy * dy) < deadZone) {
             return -1;
